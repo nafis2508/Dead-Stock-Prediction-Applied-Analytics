@@ -1,3 +1,4 @@
+<img width="1024" height="1024" alt="DeadStockPrediction" src="https://github.com/user-attachments/assets/3d6eb6ac-b4a7-401d-99b4-5d0e0463ae0c" />
 # Dead Stock Prediction – Applied Predictive Analytics
 
 This repository contains my first assessment for the Applied Predictive Analytics unit (Session 2, 2025). The project builds a predictive model to identify **dead stock items** using inventory and movement data. Dead stock refers to items that no longer sell and remain in storage for extended periods, tying up capital and warehouse space.
