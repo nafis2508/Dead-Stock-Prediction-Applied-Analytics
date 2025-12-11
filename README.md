@@ -1,141 +1,149 @@
-Dead Stock Prediction – Applied Predictive Analytics (BUSA8001)
+# Dead Stock Prediction – Applied Predictive Analytics
 
-This repository contains my full solution for Programming Task 1 in the Applied Predictive Analytics unit (BUSA8001, Session 2, 2025).
-The project focuses on predicting dead stock in a manufacturing inventory system using Python, pandas, NumPy, and scikit-learn.
+This repository contains my first assessment for the Applied Predictive Analytics unit (Session 2, 2025). The project builds a predictive model to identify **dead stock items** using inventory and movement data. Dead stock refers to items that no longer sell and remain in storage for extended periods, tying up capital and warehouse space.
 
-Project Overview
+---
 
-A mid-sized manufacturing retailer observed that a subset of inventory items across Australian warehouses had not moved for extended periods. The goal of this analysis was to predict which items are likely to be classified as dead stock (1 = yes, 0 = no) to support decisions around markdowns, liquidation, storage optimisation, and warehouse planning.
+## 1. Project Overview
 
-The assignment required:
+The dataset (`Inventory.xlsx`) contains **3,000 inventory records** and includes:
 
-Cleaning and preparing 3,000 inventory records
+* Stock quantities in different age buckets
+* Monthly demand (Jan–Dec)
+* Inventory turn and average monthly sales
+* ABC Class, Business Area, Warehouse, State, and Item Type
+* A target label: **Dead stock** (1 = dead stock, 0 = active)
 
-Treating categorical, nominal, and numeric variables
+The goal is to build a supervised machine learning model to predict whether an item is dead stock, and to understand which features contribute most to this outcome.
 
-Imputing missing values using mean/mode
+---
 
-One-hot encoding several categorical variables
+## 2. Data Preparation
 
-Preparing X and y arrays
+Key preprocessing steps:
 
-Training and evaluating:
+### **2.1 Dropped non-predictive columns**
 
-Logistic Regression (linear classifier)
+* `Item No.`
+* `Item Description`
 
-Random Forest (nonlinear classifier)
+These were identifiers / text fields with no predictive value.
 
-Interpreting model accuracy and feature importance
+### **2.2 Handling categorical variables**
 
-Recommending the most suitable model
+* `State` → converted to `State_NSW` using `get_dummies(drop_first=True)`
+* `Whse` → encoded into dummy variables (`Whse_1N1`, `Whse_1W0`)
+* `Item Type` → grouped into four categories:
 
-Key Steps & Methods
-1. Data Cleaning & Imputation
+  * Finished Goods
+  * Raw Materials
+  * WIP Manufactured
+  * Other
 
-Dropped non-predictive text fields (e.g., Item Description).
+### **2.3 ABC Class**
 
-Numeric features → imputed using mean
+ABC Class contains important categories that reflect product lifecycle:
 
-Categorical features → imputed using mode
+* “Not Purchasing”
+* “End of Life”
+  Both are strong indicators of dead stock.
 
-Re-grouped Item Type into 4 consolidated categories
+Encoded using one-hot encoding (e.g., `ABCClass_E`, `ABCClass_I`, etc.)
 
-Used get_dummies() to encode:
+### **2.4 Imputation**
 
-Warehouse (Whse)
+* **Numeric columns** → replaced missing values with **mean**
+* **Categorical columns** → replaced missing values with **mode**
 
-State
+### **2.5 Train–Test Split**
 
-Base Unit
+* 80% training, 20% testing
+* `random_state=31`
+* `stratify=Dead stock`
 
-Business Area
+### **2.6 Scaling**
 
-ABC Class
+Numeric predictors were standardised using `StandardScaler`.
 
-Converted Dead stock to numeric using LabelEncoder.
+---
 
-2. Feature Matrix (X) and Target Vector (y)
+## 3. Models Built
 
-Used first 80% of observations for initial X and y arrays.
+Two models were trained:
 
-Train-test split performed with:
+### **3.1 Logistic Regression**
 
-test_size=0.2
+* Linear, interpretable baseline
+* Hyperparameter tuning across C values (0.5 → 10)
+* Very stable performance regardless of C
+* **Training Accuracy:** ~0.996
+* **Test Accuracy:** ~0.996
 
-random_state=31
+### **3.2 Random Forest Classifier**
 
-stratify=y
+* Nonlinear model capturing feature interactions
+* Best configuration:
 
-Standardised numeric features using StandardScaler.
+  * `n_estimators=10`
+  * `criterion="entropy"`
+* **Training Accuracy:** 0.9995
+* **Test Accuracy:** 1.0000
 
-3. Models Trained
-Logistic Regression
-lr = LogisticRegression(C=1, random_state=31, solver='lbfgs')
+Random Forest also provided **feature importances**, useful for interpreting which variables drive dead stock risk.
 
+---
 
-Training Accuracy: 99.64%
+## 4. Key Findings
 
-Test Accuracy: 99.58%
+### **4.1 Most Influential Features**
 
-Very stable across different C values
+Top predictors (Random Forest importances):
 
-Captures linear relationships well
+1. **Over 2 years Qty** – long-aged stock strongly linked to dead stock
+2. **ABCClass_E / ABCClass_I / ABCClass_J** – categories including “End of Life” and “Not Purchasing”
+3. **% of over 2 year** – proportion of stock sitting idle
+4. **Inventory Turn** – slow turnover increases dead stock risk
+5. **Over 3 Years Quantity** – extreme aging is a major flag
 
-Random Forest
-rf = RandomForestClassifier(n_estimators=10, criterion='entropy', random_state=31)
+**Interpretation:**
+Dead stock is driven primarily by **stock age** and **ABC lifecycle categorisation**. Items that sit for long periods or are marked as not actively purchased naturally transition into dead stock.
 
+---
 
-Training Accuracy: 99.94%
+## 5. Recommended Model
 
-Test Accuracy: 100%
+Although Logistic Regression performed very well and remained stable across hyperparameter values, the **Random Forest model achieved the highest test accuracy (100%)** and captured nonlinear interactions between aging, ABC Class, and stock movement.
 
-Strongest model overall
+For operational prediction, **Random Forest is recommended** because:
 
-Captures nonlinear interactions and hierarchical splits
+* It delivers the strongest predictive performance
+* It handles complex relationships in inventory behaviour
+* Feature importances clearly highlight the drivers of dead stock
 
-4. Best Model & Recommendation
+Logistic Regression remains useful for explanation and decision support, but Random Forest is superior for prediction.
 
-While Logistic Regression performed extremely well and demonstrated strong stability, Random Forest slightly outperformed it, achieving perfect test accuracy under its best configuration (10 trees, entropy criterion).
+---
 
-Random Forest was recommended because:
+## 6. Repository Structure
 
-It consistently captured complex interactions between stock age, ABC classification, turnover behaviour, and warehouse attributes.
+```
+├── Inventory.xlsx                 # Source dataset (not included if confidential)
+├── notebook.ipynb                 # Full analysis, cleaning, modelling, and results
+├── requirements.txt               # Python dependencies
+├── README.md                      # Project documentation
+```
 
-It achieved the highest predictive accuracy.
+---
 
-Feature importance allowed clear interpretation of which variables drive dead stock risk.
+## 7. Requirements
 
-5. Important Predictors
-
-Based on Random Forest feature importance:
-
-Over 2 Years Qty
-
-ABC Class (especially "Not Purchasing" & "End of Life")
-
-% of Over 2 Years
-
-Inventory Turn
-
-Over 3 Years Quantity
-
-These reflect stock age + ABC categorisation, the strongest business logic indicators of unsellable inventory.
-
-Code Structure
-├── data/ (not included for confidentiality)
-├── notebook/
-│   └── dead_stock_prediction.ipynb
-├── README.md
-└── requirements.txt (optional)
-
-Technologies Used
-
-Python
-
+```
+numpy
 pandas
-
-NumPy
-
 scikit-learn
+matplotlib
+seaborn
+jupyter
+```
 
-Jupyter Notebook
+
